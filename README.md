@@ -1,4 +1,4 @@
-# Proyecto-Final
+# Eco bot
 Para que Eco Bot Funcione se le tiene que agregar un token y se le tiene que dar permiso de Send Messages, Read Messages y Read Message History
 ya con eso cativado puedes agregar a Eco Bot a tu servidor de discord 
 tienes que crear dos roles y un canal especifico para el bot, 
