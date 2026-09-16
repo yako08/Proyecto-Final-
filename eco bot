@@ -1,0 +1,92 @@
+"""
+Bot de Discord - Noticias
+--------------------------
+
+"""
+
+import discord
+from discord.ext import commands
+import requests
+from bs4 import BeautifulSoup
+
+
+
+DISCORD_TOKEN = "Ingresa tu Token"          
+PREFIJO = "!"                             
+
+
+URL_NOTICIAS = "https://noticiasambientales.com/"
+
+
+
+intents = discord.Intents.default()
+intents.message_content = True  
+
+bot = commands.Bot(command_prefix=PREFIJO, intents=intents)
+
+
+def obtener_ultima_noticia(url: str):
+    """
+    Entra a la página web y busca el primer enlace que parezca una noticia.
+    Esto es genérico y puede necesitar ajustes según la estructura de cada
+    página (cada sitio web organiza su HTML de forma distinta).
+    """
+    headers = {
+        "User-Agent": "Mozilla/5.0 (compatible; NoticiasBot/1.0)"
+    }
+
+    respuesta = requests.get(url, headers=headers, timeout=10)
+    respuesta.raise_for_status()  
+
+    soup = BeautifulSoup(respuesta.text, "html.parser")
+
+    
+    enlaces = soup.find_all("a", href=True)
+
+    for enlace in enlaces:
+        texto = enlace.get_text(strip=True)
+        href = enlace["href"]
+
+        
+        if texto and len(texto) > 25:
+            
+            if href.startswith("/"):
+                
+                dominio = "/".join(url.split("/")[:3])
+                href = dominio + href
+
+            if href.startswith("http"):
+                return texto, href
+
+    return None, None
+
+
+@bot.event
+async def on_ready():
+    print(f"✅ Bot conectado como {bot.user}")
+
+
+@bot.command(name="noticia")
+async def noticia(ctx):
+    """
+    Comando de Discord: !noticia
+    Busca la última noticia de la página configurada y la envía al chat.
+    """
+    await ctx.send("🔎 Buscando la noticia más reciente...")
+
+    try:
+        titulo, link = obtener_ultima_noticia(URL_NOTICIAS)
+
+        if link:
+            await ctx.send(f"📰 **{titulo}**\n{link}")
+        else:
+            await ctx.send("No pude encontrar ninguna noticia en esa página. 😕")
+
+    except requests.RequestException as e:
+        await ctx.send(f"⚠️ Hubo un error al conectarme a la página: {e}")
+
+
+# ============ EJECUTAR EL BOT ============
+
+if __name__ == "__main__":
+    bot.run(DISCORD_TOKEN)
